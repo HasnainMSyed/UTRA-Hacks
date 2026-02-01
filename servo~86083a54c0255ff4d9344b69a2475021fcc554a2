@@ -1,0 +1,26 @@
+#include <Servo.h>
+
+Servo servo;
+
+int closed = 90;
+int opened = 180;
+
+void setup() {
+  servo.attach(10);
+  servo.write(closed); 
+  delay(200);
+}
+
+void openServo(){
+  for(int i = closed; i <= opened; i++){
+    servo.write(i);
+    delay(1);
+  }
+}
+
+void closeServo(){
+  for(int i = opened; i >= closed; i--){
+    servo.write(i);
+    delay(1);
+  }
+}
