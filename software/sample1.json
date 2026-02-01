@@ -1,0 +1,74 @@
+[
+  {
+    "name": "Baseline run",
+    "success": true,
+    "timeSec": 28.6,
+    "lineLosses": 3,
+    "corrections": 11,
+    "collisions": 1,
+    "speed": 135,
+    "batteryNote": "ok",
+    "notes": "frequent drift, overshooting turns",
+    "score": 0
+  },
+  {
+    "name": "Lower speed test",
+    "success": true,
+    "timeSec": 26.2,
+    "lineLosses": 2,
+    "corrections": 9,
+    "collisions": 0,
+    "speed": 125,
+    "batteryNote": "ok",
+    "notes": "slower but fewer collisions",
+    "score": 0
+  },
+  {
+    "name": "PWM rebalance",
+    "success": true,
+    "timeSec": 23.9,
+    "lineLosses": 1,
+    "corrections": 7,
+    "collisions": 0,
+    "speed": 145,
+    "batteryNote": "ok",
+    "notes": "adjusted left/right motor balance",
+    "score": 0
+  },
+  {
+    "name": "Aggressive tuning attempt",
+    "success": false,
+    "timeSec": 19.4,
+    "lineLosses": 0,
+    "corrections": 4,
+    "collisions": 2,
+    "speed": 165,
+    "batteryNote": "sag",
+    "notes": "too fast, hit stage wall, battery dipped",
+    "score": 0
+  },
+  {
+    "name": "Stabilized configuration",
+    "success": true,
+    "timeSec": 20.8,
+    "lineLosses": 0,
+    "corrections": 4,
+    "collisions": 0,
+    "speed": 150,
+    "batteryNote": "fresh",
+    "notes": "stable line follow, clean stage entry",
+    "score": 0
+  },
+  {
+    "name": "Confirmation run",
+    "success": true,
+    "timeSec": 20.5,
+    "lineLosses": 0,
+    "corrections": 3,
+    "collisions": 0,
+    "speed": 150,
+    "batteryNote": "fresh",
+    "notes": "repeatable behavior",
+    "score": 0
+  }
+]
