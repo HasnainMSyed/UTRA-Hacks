@@ -1,0 +1,49 @@
+## Project Name
+
+**Robot Run Analyzer**
+
+## Elevator Pitch
+
+Robot Run Analyzer is a lightweight web app that turns robot test runs into measurable performance data. It scores each run, visualizes trends, and generates tuning recommendations (speed balance, line-follow aggressiveness, obstacle thresholds) so teams can iterate faster than “guess-and-check.”
+
+## Inspiration
+
+During the hackathon, we realized the hardest part of robotics isn’t writing code once — it’s quickly improving reliability under time pressure. We wanted a tool that makes testing more systematic: track what happened, compare changes, and get concrete next-step suggestions.
+
+## What it does
+
+Robot Run Analyzer lets you log each robot run using a simple form (or quick paste format) and instantly produces:
+
+* **Run Score (0–100):** a weighted score based on time, line losses, corrections, collisions, and overall success.
+* **Trend Visuals:** charts that show how performance changes across runs (score/time/line losses).
+* **Recommendations:** “expert-system” guidance that flags the likely bottleneck and suggests fixes (e.g., reduce speed if line loss is high, increase correction strength if drifting is common, check battery sag if performance suddenly drops).
+
+## How we built it
+
+We built a single-page web app using:
+
+* **HTML/CSS/JavaScript** for a fast, reliable interface
+* **Chart.js** for simple, readable charts
+* A transparent scoring + rule-based recommendation engine so the analysis is explainable (not a black box)
+
+## Challenges we ran into
+
+* **Defining a fair scoring metric:** different failure modes (line loss vs collision) don’t “cost” the same, so we tuned the weights to reflect what actually slows the robot down and risks failure.
+* **Making insights useful, not generic:** we mapped recommendations directly to real robot parameters teams can adjust (PWM speed balance, turn gain, sensor thresholds, obstacle distance).
+
+## Accomplishments we’re proud of
+
+* We shipped a working tool that provides **immediate, actionable** feedback after each run.
+* The UI is intentionally simple so teams can use it during frantic iteration cycles.
+* The recommendations are explainable and grounded in robotics debugging, not just “AI fluff.”
+
+## What we learned
+
+* Clear metrics reduce stress: when you can measure improvement, you stop arguing about guesses.
+* Simple rule-based systems can be extremely effective when time is limited and interpretability matters.
+
+## What’s next
+
+* Add CSV upload/export for easier run logging
+* Add profiles per robot configuration (different motor tuning, sensor placements)
+* Optional integration with microcontroller serial logs to auto-fill run data

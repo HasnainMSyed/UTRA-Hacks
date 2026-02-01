@@ -1,0 +1,647 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Robot Run Analyzer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style>
+    :root{
+      --bg:#0b1020;
+      --card:#111a33;
+      --muted:#a9b4d0;
+      --text:#eaf0ff;
+      --accent:#7aa2ff;
+      --good:#39d98a;
+      --warn:#ffd166;
+      --bad:#ff5c77;
+      --stroke: rgba(255,255,255,0.10);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+      --radius: 16px;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 20% -10%, rgba(122,162,255,0.25), transparent 60%),
+                  radial-gradient(900px 600px at 90% 10%, rgba(57,217,138,0.18), transparent 55%),
+                  var(--bg);
+      color:var(--text);
+    }
+    .wrap{ max-width:1100px; margin:0 auto; padding:28px 18px 36px; }
+    header{
+      display:flex; align-items:flex-end; justify-content:space-between; gap:18px; margin-bottom:18px;
+    }
+    h1{ margin:0; font-size:28px; letter-spacing:-0.5px; }
+    .sub{ margin:6px 0 0; color:var(--muted); font-size:14px; line-height:1.35; }
+    .pillrow{ display:flex; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
+    .pill{
+      border:1px solid var(--stroke); color:var(--muted);
+      padding:8px 10px; border-radius:999px; font-size:12px;
+      background: rgba(255,255,255,0.03);
+      backdrop-filter: blur(8px);
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns: 420px 1fr;
+      gap:16px;
+    }
+    @media (max-width: 980px){
+      .grid{ grid-template-columns:1fr; }
+    }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border:1px solid var(--stroke);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding:16px;
+    }
+    .card h2{
+      margin:0 0 10px;
+      font-size:14px; letter-spacing:0.3px;
+      color:#dce6ff;
+      text-transform:uppercase;
+    }
+    label{ display:block; font-size:12px; color:var(--muted); margin:10px 0 6px; }
+    input, select, textarea{
+      width:100%;
+      background: rgba(10,14,28,0.55);
+      border:1px solid var(--stroke);
+      color: var(--text);
+      border-radius: 12px;
+      padding:10px 10px;
+      outline:none;
+    }
+    input:focus, select:focus, textarea:focus{ border-color: rgba(122,162,255,0.6); }
+    .row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .btnrow{ display:flex; gap:10px; flex-wrap:wrap; margin-top:12px; }
+    button{
+      border:1px solid var(--stroke);
+      background: rgba(122,162,255,0.15);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    button:hover{ background: rgba(122,162,255,0.22); }
+    .secondary{ background: rgba(255,255,255,0.06); }
+    .danger{ background: rgba(255,92,119,0.15); }
+    .danger:hover{ background: rgba(255,92,119,0.22); }
+
+    .kpis{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+      margin-bottom:12px;
+    }
+    @media (max-width: 520px){
+      .kpis{ grid-template-columns:1fr; }
+    }
+    .kpi{
+      border:1px solid var(--stroke);
+      border-radius: 14px;
+      padding:12px;
+      background: rgba(255,255,255,0.03);
+    }
+    .kpi .v{ font-size:22px; font-weight:700; letter-spacing:-0.3px; }
+    .kpi .k{ font-size:12px; color:var(--muted); margin-top:4px; }
+
+    .scoreBadge{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:8px 10px; border-radius:999px;
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,0.03);
+      font-size:12px; color: var(--muted);
+    }
+    .dot{ width:10px; height:10px; border-radius:999px; background: var(--warn); }
+    .dot.good{ background: var(--good); }
+    .dot.bad{ background: var(--bad); }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      margin-top:10px;
+      font-size:13px;
+    }
+    th, td{
+      border-bottom:1px solid var(--stroke);
+      padding:10px 8px;
+      text-align:left;
+      color:#eaf0ff;
+      vertical-align: top;
+    }
+    th{ color: var(--muted); font-weight:600; font-size:12px; }
+    td.muted{ color: var(--muted); }
+    .tag{
+      display:inline-block;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid var(--stroke);
+      color: var(--muted);
+      font-size:12px;
+      background: rgba(255,255,255,0.03);
+    }
+    .recbox{
+      border:1px solid var(--stroke);
+      border-radius:14px;
+      background: rgba(255,255,255,0.03);
+      padding:12px;
+      margin-top:12px;
+    }
+    .recbox h3{
+      margin:0 0 8px;
+      font-size:13px;
+      color:#dce6ff;
+      letter-spacing:0.2px;
+    }
+    .recbox ul{ margin:0; padding-left:18px; color:#dce6ff; }
+    .recbox li{ margin:6px 0; color:#dce6ff; }
+    .small{ font-size:12px; color: var(--muted); margin-top:8px; line-height:1.35; }
+    .footer{ margin-top:14px; color:var(--muted); font-size:12px; }
+    .inlineCode{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size:12px; }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Robot Run Analyzer</h1>
+        <p class="sub">
+          Log your robot runs, get a 0–100 score, visualize trends, and get “what to tweak next” suggestions.
+          Built for fast iteration under hackathon pressure.
+        </p>
+      </div>
+      <div class="pillrow">
+        <div class="pill">Single-file</div>
+        <div class="pill">Explainable scoring</div>
+        <div class="pill">Charts + recommendations</div>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- LEFT: INPUT -->
+      <section class="card">
+        <h2>Add a run</h2>
+
+        <div class="row">
+          <div>
+            <label>Run name</label>
+            <input id="runName" placeholder="e.g., Ramp Test #3" />
+          </div>
+          <div>
+            <label>Success</label>
+            <select id="success">
+              <option value="true" selected>Yes</option>
+              <option value="false">No</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Time (seconds)</label>
+            <input id="timeSec" type="number" min="0" step="0.1" value="18.5" />
+          </div>
+          <div>
+            <label>Line losses</label>
+            <input id="lineLosses" type="number" min="0" step="1" value="0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Corrections (hard turns / recoveries)</label>
+            <input id="corrections" type="number" min="0" step="1" value="3" />
+          </div>
+          <div>
+            <label>Collisions / wall hits</label>
+            <input id="collisions" type="number" min="0" step="1" value="0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Avg speed setting (0–255, optional)</label>
+            <input id="speed" type="number" min="0" max="255" step="1" value="150" />
+          </div>
+          <div>
+            <label>Battery note (optional)</label>
+            <select id="batteryNote">
+              <option value="ok" selected>OK</option>
+              <option value="sag">Felt sluggish / sag</option>
+              <option value="fresh">Fresh battery</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Notes (optional)</label>
+        <textarea id="notes" rows="3" placeholder="e.g., drifted right on ramp, servo jitter at launch..."></textarea>
+
+        <div class="btnrow">
+          <button id="addBtn">Add run</button>
+          <button class="secondary" id="demoBtn">Add 5 demo runs</button>
+          <button class="secondary" id="exportBtn">Export JSON</button>
+          <button class="secondary" id="importBtn">Import JSON</button>
+          <button class="danger" id="clearBtn">Clear all</button>
+        </div>
+
+        <div class="footer">
+          Tip: You can demo this even if you only enter 2–3 runs. Judges just need to see it work.
+        </div>
+      </section>
+
+      <!-- RIGHT: OUTPUT -->
+      <section class="card">
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+          <h2 style="margin-bottom:0;">Dashboard</h2>
+          <div class="scoreBadge" id="overallBadge">
+            <span class="dot" id="overallDot"></span>
+            <span id="overallText">No runs yet</span>
+          </div>
+        </div>
+
+        <div class="kpis">
+          <div class="kpi">
+            <div class="v" id="kpiRuns">0</div>
+            <div class="k">Runs logged</div>
+          </div>
+          <div class="kpi">
+            <div class="v" id="kpiAvgScore">—</div>
+            <div class="k">Average score</div>
+          </div>
+          <div class="kpi">
+            <div class="v" id="kpiBestScore">—</div>
+            <div class="k">Best score</div>
+          </div>
+        </div>
+
+        <div style="height:260px;">
+          <canvas id="scoreChart"></canvas>
+        </div>
+
+        <div class="recbox">
+          <h3>What to fix next</h3>
+          <ul id="recs">
+            <li class="muted">Add a run to get recommendations.</li>
+          </ul>
+          <div class="small" id="explain">
+            Scoring is explainable and rule-based. It’s not a black box—each metric maps to real robot tuning knobs.
+          </div>
+        </div>
+
+        <h2 style="margin-top:14px;">Runs</h2>
+        <div style="overflow:auto; border-radius: 14px; border:1px solid var(--stroke);">
+          <table id="runsTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Run</th>
+                <th>Score</th>
+                <th>Time</th>
+                <th>Line</th>
+                <th>Corr</th>
+                <th>Coll</th>
+                <th>Success</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="small">
+          Want extra polish in Devpost? Screenshot this dashboard + your robot in the same post.
+        </div>
+      </section>
+    </div>
+  </div>
+
+<script>
+  // ---------- Data ----------
+  let runs = [];
+
+  // ---------- Scoring ----------
+  function clamp(x, a, b){ return Math.max(a, Math.min(b, x)); }
+
+  function computeScore(run){
+    // Start from 100, subtract penalties, cap to [0,100]
+    // Weights tuned for hackathon robotics: line loss & collisions are expensive.
+    const timePenalty = run.timeSec * 1.6;        // 10s => -16
+    const linePenalty = run.lineLosses * 18;      // each line loss hurts
+    const corrPenalty = run.corrections * 3.5;    // oscillation / recovery penalty
+    const collPenalty = run.collisions * 22;      // collisions are bad
+
+    let score = 100 - timePenalty - linePenalty - corrPenalty - collPenalty;
+
+    // If run failed, cap the score aggressively so "fast failure" doesn't look good
+    if (!run.success) score = Math.min(score, 35);
+
+    // Battery sag hint: slight penalty (optional) to reflect instability
+    if (run.batteryNote === "sag") score -= 6;
+
+    return clamp(Math.round(score), 0, 100);
+  }
+
+  function scoreTier(score){
+    if (score >= 80) return {label:"Strong", dot:"good"};
+    if (score >= 55) return {label:"Okay", dot:""};
+    return {label:"Needs work", dot:"bad"};
+  }
+
+  // ---------- Recommendations ----------
+  function generateRecommendations(){
+    const list = document.getElementById("recs");
+    list.innerHTML = "";
+
+    if (runs.length === 0){
+      const li = document.createElement("li");
+      li.textContent = "Add a run to get recommendations.";
+      li.style.color = "var(--muted)";
+      list.appendChild(li);
+      return;
+    }
+
+    // Focus on last 3 runs to suggest next steps based on current behavior
+    const recent = runs.slice(-3);
+
+    const avg = (key) => recent.reduce((s,r)=>s+r[key],0)/recent.length;
+
+    const avgTime = avg("timeSec");
+    const avgLine = avg("lineLosses");
+    const avgCorr = avg("corrections");
+    const avgColl = avg("collisions");
+    const failCount = recent.filter(r=>!r.success).length;
+
+    const last = runs[runs.length-1];
+
+    const recs = [];
+
+    // 1) Biggest failure mode first
+    if (failCount > 0){
+      recs.push("Prioritize reliability: reduce base speed and improve line reacquisition before optimizing time.");
+    }
+
+    if (avgColl >= 1){
+      recs.push("You’re hitting boundaries: increase obstacle stop distance (ultrasonic threshold) or slow approach speed near walls.");
+    }
+
+    if (avgLine >= 1){
+      recs.push("Frequent line loss: lower speed, increase correction strength (turn gain), and re-check IR threshold + sensor height.");
+    } else if (avgCorr >= 8){
+      recs.push("Oscillation detected: reduce turn gain (TURN_DELTA) or add smoothing (smaller corrections more often).");
+    }
+
+    // 2) Performance tuning
+    if (avgLine < 1 && failCount === 0){
+      recs.push("Line tracking looks stable: you can safely increase speed slightly to reduce time.");
+    }
+
+    // 3) Motor balance hints
+    if (last.notes.toLowerCase().includes("drift") || last.notes.toLowerCase().includes("curve")){
+      recs.push("Drift noted: rebalance left/right PWM base speeds (different motor strengths) until it drives straight on flat ground.");
+    } else {
+      recs.push("If the robot curves on straights: adjust left vs right base PWM (motor imbalance is common) before changing control logic.");
+    }
+
+    // 4) Battery sag / sudden regression
+    if (last.batteryNote === "sag"){
+      recs.push("Battery sag likely: use a fresh pack for motors, and keep servo power stable (shared ground, avoid Arduino 5V for heavy loads).");
+    }
+
+    // 5) Score-specific suggestion
+    if (last.score < 55){
+      recs.push("Focus on reducing line losses and collisions first—time improvements won’t matter until the run is consistent.");
+    } else if (last.score >= 80){
+      recs.push("You’re in a good place: do 2–3 confirmation runs to prove it’s repeatable, then lock the configuration.");
+    }
+
+    // Deduplicate (simple)
+    const uniq = [...new Set(recs)].slice(0, 6);
+
+    uniq.forEach(text=>{
+      const li = document.createElement("li");
+      li.textContent = text;
+      list.appendChild(li);
+    });
+  }
+
+  // ---------- UI ----------
+  const tbody = document.querySelector("#runsTable tbody");
+
+  function renderTable(){
+    tbody.innerHTML = "";
+    runs.forEach((r, idx)=>{
+      const tr = document.createElement("tr");
+
+      const cells = [
+        idx+1,
+        r.name || `Run ${idx+1}`,
+        r.score,
+        r.timeSec.toFixed(1),
+        r.lineLosses,
+        r.corrections,
+        r.collisions,
+        r.success ? "Yes" : "No",
+        r.notes ? r.notes : ""
+      ];
+
+      cells.forEach((c, i)=>{
+        const td = document.createElement("td");
+        td.textContent = c;
+        if (i === 8 && !r.notes) td.className = "muted";
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+  }
+
+  function updateKPIs(){
+    document.getElementById("kpiRuns").textContent = runs.length;
+
+    if (runs.length === 0){
+      document.getElementById("kpiAvgScore").textContent = "—";
+      document.getElementById("kpiBestScore").textContent = "—";
+      document.getElementById("overallText").textContent = "No runs yet";
+      document.getElementById("overallDot").className = "dot";
+      return;
+    }
+
+    const avgScore = runs.reduce((s,r)=>s+r.score,0)/runs.length;
+    const bestScore = Math.max(...runs.map(r=>r.score));
+    const latest = runs[runs.length-1];
+
+    document.getElementById("kpiAvgScore").textContent = Math.round(avgScore);
+    document.getElementById("kpiBestScore").textContent = bestScore;
+
+    const tier = scoreTier(latest.score);
+    document.getElementById("overallText").innerHTML =
+      `Latest: <span class="inlineCode">${latest.score}</span> • ${tier.label}`;
+    document.getElementById("overallDot").className = `dot ${tier.dot}`;
+  }
+
+  // ---------- Chart ----------
+  const ctx = document.getElementById("scoreChart");
+  const chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Score",
+        data: [],
+        tension: 0.25,
+        fill: true,
+        borderWidth: 2,
+        pointRadius: 3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: "#eaf0ff" } },
+        tooltip: { enabled: true }
+      },
+      scales: {
+        x: { ticks: { color: "#a9b4d0" }, grid: { color: "rgba(255,255,255,0.06)" } },
+        y: {
+          min: 0, max: 100,
+          ticks: { color: "#a9b4d0" },
+          grid: { color: "rgba(255,255,255,0.06)" }
+        }
+      }
+    }
+  });
+
+  function updateChart(){
+    chart.data.labels = runs.map((r, i)=> `Run ${i+1}`);
+    chart.data.datasets[0].data = runs.map(r=> r.score);
+    chart.update();
+  }
+
+  // ---------- Actions ----------
+  function getFormRun(){
+    const name = document.getElementById("runName").value.trim();
+    const success = document.getElementById("success").value === "true";
+    const timeSec = parseFloat(document.getElementById("timeSec").value || "0");
+    const lineLosses = parseInt(document.getElementById("lineLosses").value || "0", 10);
+    const corrections = parseInt(document.getElementById("corrections").value || "0", 10);
+    const collisions = parseInt(document.getElementById("collisions").value || "0", 10);
+    const speed = parseInt(document.getElementById("speed").value || "0", 10);
+    const batteryNote = document.getElementById("batteryNote").value;
+    const notes = document.getElementById("notes").value.trim();
+
+    const run = {
+      name,
+      success,
+      timeSec: isFinite(timeSec) ? timeSec : 0,
+      lineLosses: isFinite(lineLosses) ? lineLosses : 0,
+      corrections: isFinite(corrections) ? corrections : 0,
+      collisions: isFinite(collisions) ? collisions : 0,
+      speed: isFinite(speed) ? speed : 0,
+      batteryNote,
+      notes
+    };
+    run.score = computeScore(run);
+    return run;
+  }
+
+  function refresh(){
+    renderTable();
+    updateKPIs();
+    updateChart();
+    generateRecommendations();
+    persist();
+  }
+
+  // ---------- Persistence ----------
+  const STORAGE_KEY = "robotRunAnalyzer_v1";
+  function persist(){
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(runs)); } catch(e){}
+  }
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw){
+        runs = JSON.parse(raw) || [];
+      }
+    } catch(e){ runs = []; }
+    refresh();
+  }
+
+  // ---------- Buttons ----------
+  document.getElementById("addBtn").addEventListener("click", ()=>{
+    const run = getFormRun();
+    runs.push(run);
+    refresh();
+  });
+
+  document.getElementById("clearBtn").addEventListener("click", ()=>{
+    if (!confirm("Clear all runs?")) return;
+    runs = [];
+    refresh();
+  });
+
+  document.getElementById("demoBtn").addEventListener("click", ()=>{
+    const demo = [
+      {name:"Ramp test #1", success:true,  timeSec:26.4, lineLosses:2, corrections:9,  collisions:1, speed:140, batteryNote:"ok",   notes:"drifted right on ramp"},
+      {name:"Ramp test #2", success:true,  timeSec:23.1, lineLosses:1, corrections:7,  collisions:0, speed:150, batteryNote:"ok",   notes:"better after PWM balance"},
+      {name:"Ramp test #3", success:true,  timeSec:20.7, lineLosses:0, corrections:6,  collisions:0, speed:160, batteryNote:"ok",   notes:"stable line follow"},
+      {name:"Stage entry",  success:false, timeSec:18.9, lineLosses:0, corrections:3,  collisions:2, speed:150, batteryNote:"sag",  notes:"hit wall, battery felt weak"},
+      {name:"Stage retry",  success:true,  timeSec:19.8, lineLosses:0, corrections:4,  collisions:0, speed:145, batteryNote:"fresh",notes:"increased ultrasonic threshold"}
+    ];
+    demo.forEach(r=> r.score = computeScore(r));
+    runs = runs.concat(demo);
+    refresh();
+  });
+
+  document.getElementById("exportBtn").addEventListener("click", ()=>{
+    const blob = new Blob([JSON.stringify(runs, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "robot-runs.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById("importBtn").addEventListener("click", ()=>{
+    const inp = document.createElement("input");
+    inp.type = "file";
+    inp.accept = "application/json";
+    inp.onchange = (e)=>{
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const parsed = JSON.parse(reader.result);
+          if (!Array.isArray(parsed)) throw new Error("Invalid JSON format");
+          // ensure score exists
+          parsed.forEach(r=>{
+            if (typeof r.score !== "number") r.score = computeScore(r);
+          });
+          runs = parsed;
+          refresh();
+        } catch(err){
+          alert("Import failed: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+    inp.click();
+  });
+
+  load();
+</script>
+</body>
+</html>
